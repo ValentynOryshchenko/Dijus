@@ -1,0 +1,62 @@
+version: "2.2"
+
+services:
+  fpm:
+    container_name: fpm
+    build:
+      context: ../
+      dockerfile: ./.docker/fpm/Dockerfile
+    depends_on:
+      - rabbitmq
+    volumes:
+      - ../source/:/var/www/test:cached
+      - ./fpm/php.ini:/usr/local/etc/php/php.ini
+    networks:
+      - test
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    depends_on:
+      - fpm
+    ports:
+      - 8080:80
+    volumes:
+      - ../source/:/var/www/test:cached
+    networks:
+      - test
+
+  postgres:
+    container_name: postgres
+    image: postgres:10.5
+    restart: always
+    networks:
+      - test
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    ports:
+      - '5438:5432'
+
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "rabbit"
+      RABBITMQ_DEFAULT_USER: "user"
+      RABBITMQ_DEFAULT_PASS: "password"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - test
+
+networks:
+  test:
+    driver: bridge

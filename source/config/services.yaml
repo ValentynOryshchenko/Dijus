@@ -1,0 +1,23 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Tests/'
+
+    _instanceof:
+        App\Service\Notification\Sms\ApiClient\ApiClientInterface:
+            tags: [ 'sms_api_client' ]
+            lazy: true
+
+    App\Service\Notification\Sms\TransportManager:
+        arguments:
+            - !tagged_iterator 'sms_api_client'
